@@ -1,11 +1,11 @@
 import terminal
+import random
 
 def possible_boards(current_board):
-	unplayed_spots = current_board.unplayed_spots()
+	empty_spots = current_board.unplayed_spots
 	poss_boards = []
-	grid = [list(row) for row in current_board.grid]
-	for spot in unplayed_spots:
-		new_board = terminal.Board(grid)
+	for spot in empty_spots:
+		new_board = terminal.Board(current_board.rows)
 		new_board.place_char(spot[0],spot[1])
 		poss_boards.append(new_board)
 	return poss_boards
@@ -45,7 +45,7 @@ def best_move(board):
 		util = calc_util(ends, board.turn)
 		board_utils.append((board,util))
 	best_next = best_move_helper(board_utils)
-	row, col = best_next.find_diff(board)
+	row, col = best_next.find_diff(board)[0]
 	return (row,col)
 
 def best_move_helper(pairs):
@@ -55,15 +55,27 @@ def best_move_helper(pairs):
 			best = pair[0]
 	return best
 
+def random_move(board):
+	empty_spots = board.unplayed_spots
+	return empty_spots[random.randint(0,len(empty_spots))]
 
-other_board = [
-            ['O','X','O'], 
-            ['X','O','O'], 
-            ['X','O','X'] 
-           ]
+def play_game(num_humans):
+    if num_humans == 1:
+        while (True): 
+            turn = my_board.turn
+            print my_board
+            if turn == 'O':
+                #r,c = best_move(my_board)
+                r,c = random_move(my_board)
+                my_board.place_char(r,c)
+            else: 
+                input_var = raw_input(turn + " Enter [row, col]: ")
+                my_board.place_char(*[int(x.strip()) for x in input_var.split(',')])
+            if my_board.check_victory():
+            	print my_board
+            	print "player " + turn + " has won!"
+            	break
 
-start_board = terminal.Board(other_board)
-
-ends = final_boards(start_board)
-
-print calc_util(ends, 'O')
+if __name__ == '__main__':
+    my_board = terminal.Board()
+    play_game(1)

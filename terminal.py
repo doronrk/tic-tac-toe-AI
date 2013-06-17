@@ -13,15 +13,15 @@ def all_same_nonspace(items):
     else:
         return all(x==items[0] for x in items)
 
-class Board:
+class Board(object):
     def __init__(self, grid = None):
         if grid is None:
             self.rows = [list(row) for row in BLANK_BOARD]
         else: 
             self.rows = [list(row) for row in grid]
-    # what is 'property'? why lamba func vs. @property funs below?
     turns_left = property(lambda self: len(self.unplayed_spots))
     turn = property(lambda self: PLAYER_SIGILS[self.turns_left%2])
+
     @property
     def columns(self):
         return zip(*self.rows)
@@ -35,7 +35,7 @@ class Board:
     def unplayed_spots(self):
         return [(r,c)
             for r in range(3) for c in range(3)
-            if self.rows[r][c] in PLAYER_SIGILS
+            if self.rows[r][c] not in PLAYER_SIGILS
         ]
 
     def __str__(self):
