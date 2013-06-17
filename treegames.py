@@ -1,26 +1,12 @@
 import terminal
 
-
-# # takes [boards] returns for x=='won_game' in [boards]
-# def player_X(board):
-
-
-# def player_O(board):
-# 	if board.check_victory():
-# 		return board
-# 	else: 
-# 		unplayed_spots = board.unplayed_spots()
-# 		player_O(board)
-# 	return [board]
-
-
 def possible_boards(current_board):
 	unplayed_spots = current_board.unplayed_spots()
 	poss_boards = []
 	grid = [list(row) for row in current_board.grid]
 	for spot in unplayed_spots:
 		new_board = terminal.Board(grid)
-		new_board.place_char(spot[0],spot[1], new_board.turn)
+		new_board.place_char(spot[0],spot[1])
 		poss_boards.append(new_board)
 	return poss_boards
 
@@ -81,11 +67,3 @@ start_board = terminal.Board(other_board)
 ends = final_boards(start_board)
 
 print calc_util(ends, 'O')
-
-# poss_boards = possible_boards(start_board)
-
-# for board in poss_boards:
-# 	next_poss_board = possible_boards(board)
-# 	board.print_board()
-# 	for next_board in next_poss_board:
-# 		next_board.print_board()

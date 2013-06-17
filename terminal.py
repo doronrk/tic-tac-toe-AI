@@ -1,107 +1,87 @@
-blank_board = [
-            ['_','_','_'], 
-            ['_','_','_'], 
-            [' ',' ',' '] 
-        ]
+#import treegames
+import itertools
 
-other_board = [
-            ['O','X','O'], 
-            ['X','O','O'], 
-            ['X','O','X'] 
-        ]
+BLANK_BOARD = ['   ',
+               '   ',
+               '   ']
+
+PLAYER_SIGILS = ['O', 'X']
+
+def all_same_nonspace(items):
+    if items[0] == ' ':
+        return False
+    else:
+        return all(x==items[0] for x in items)
 
 class Board:
     def __init__(self, grid = None):
         if grid is None:
-            self.grid = [list(row) for row in blank_board]
-        else: self.grid = [list(row) for row in grid]
-        self.turns_left = len(self.unplayed_spots())
-        self.turn = 'X' if self.turns_left%2 == 1 else 'O'
-    def place_char (self, row, col):
-        if self.grid[row][col] != '_' and self.grid[row][col] != ' ':
-            print 'Invalid move. A player has already marked that spot'
-            return 
+            self.rows = [list(row) for row in BLANK_BOARD]
         else: 
-            self.grid[row][col] = self.turn
-            self.turn = 'X' if self.turns_left%2 == 0 else 'O'
-            self.turns_left -= 1
-    def print_board (self):
-        upper = '   |   |   \n'
-        for row in range(3):
-            row_string = ''
-            if row == 2:
-                row_ground = ' '
-            else: 
-                row_ground = '_'
-            for col in range(3): 
-                if col == 2:
-                    col_close = row_ground
-                else:
-                    col_close = row_ground + "|"
-                patch = row_ground + self.grid[row][col] + col_close
-                row_string += patch
-            print upper + row_string
-        print '\n'
-    def check_victory (self):
-        # check for 3 in a single row
-        for row in self.grid:
-            if self.all_same(row):
-                return True
-        for col in range(3):
-            if self.all_same(self.get_column(col)):
-                return True
-        diags = self.get_diags()
-        if self.all_same(diags[0]) or self.all_same(diags[1]):
-            return True
-        return False
-    def get_column(self, number):
-        col = []
-        for row in self.grid:
-            col.append(row[number])
-        return col
-    def get_diags(self):
-        diag1 = []
-        diag2 = []
-        for ind in range(3):
-            diag1.append(self.grid[ind][ind])
-            diag2.append(self.grid[2-ind][ind])
-        return (diag1,diag2)
-    def all_same(self, items):
-        if items[0] == '_' or items[0] == ' ':
-            return False
-        return all(x==items[0] for x in items)
-    def valid_character(self, char):
-        return (char == 'O' or char == 'X')
+            self.rows = [list(row) for row in grid]
+    # what is 'property'? why lamba func vs. @property funs below?
+    turns_left = property(lambda self: len(self.unplayed_spots))
+    turn = property(lambda self: PLAYER_SIGILS[self.turns_left%2])
+    @property
+    def columns(self):
+        return zip(*self.rows)
 
+    # how does this work?
+    @property
+    def diags(self):
+       return zip(*[(row[i],row[2-i]) for i, row in enumerate(self.rows)])
+
+    @property
     def unplayed_spots(self):
-        unplayed_spots = []
-        for row in range(3):
-            for col in range(3):
-                # is there a way to use list comprehension for this?
-                if not self.valid_character(self.grid[row][col]):
-                    unplayed_spots.append((row,col))
-        return unplayed_spots
+        return [(r,c)
+            for r in range(3) for c in range(3)
+            if self.rows[r][c] in PLAYER_SIGILS
+        ]
+
+    def __str__(self):
+        template = (
+                '     |     |     \n'
+                '  {}  |  {}  |  {}  \n'
+                '     |     |     \n'
+                '-----------------\n'
+                '     |     |     \n'
+                '  {}  |  {}  |  {}  \n'
+                '     |     |     \n'
+                '-----------------\n'
+                '     |     |     \n'
+                '  {}  |  {}  |  {}  \n'
+                '     |     |     \n')
+        return template.format(*[c for row in self.rows for c in row])
+
+    def check_victory(self):
+        return any(all_same_nonspace(comb) for 
+            comb in itertools.chain(self.rows, self.columns, self.diags))
+
+    def place_char (self, row, col):
+        if self.rows[row][col] != ' ':
+            print 'Invalid move. A player has already marked that spot'
+        else: 
+            self.rows[row][col] = self.turn
 
     def find_diff(self, next_board):
-        next_grid = [list(row) for row in next_board.grid]
-        for row in range(3):
-            for col in range(3):
-                if next_grid[row][col] != self.grid[row][col]:
-                    return (row,col)
-
-my_board = Board()
+        return [(r,c)
+            for r in range(3) for c in range(3)
+            if next_board.rows[r][c] != self.rows[r][c]
+        ]
 
 def play_game(num_humans):
-    if num_humans == '2':
+    if num_humans == 2:
         while (True):
             turn = my_board.turn
-            my_board.print_board()
-            input_var = input(turn + " Enter [row, col]: ")
-            my_board.place_char(input_var[0],input_var[1])
+            print my_board
+            input_var = raw_input(turn + " Enter [row, col]: ")
+            my_board.place_char(*[int(x.strip()) for x in input_var.split(',')])
             if my_board.check_victory():
-                my_board.print_board()
+                print my_board
                 print "player " + turn + " has won!"
                 break
 
-play_game('2')
+if __name__ == '__main__':
+    my_board = Board()
+    play_game(2)
 
