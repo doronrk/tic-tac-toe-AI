@@ -81,19 +81,3 @@ class Board(object):
             new_board.place_char(spot[0],spot[1])
             poss_boards.append(new_board)
         return poss_boards
-
-def two_player():
-    my_board = Board()
-    while (True):
-        turn = my_board.turn
-        print my_board
-        input_var = raw_input(turn + " Enter [row, col]: ")
-        my_board.place_char(*[int(x.strip()) for x in input_var.split(',')])
-        if my_board.check_victory():
-            print my_board
-            print "player " + turn + " has won!"
-            break
-        elif my_board.check_tie():
-            print my_board
-            print "tie"
-            break
