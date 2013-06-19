@@ -61,8 +61,10 @@ class Board(object):
     def place_char (self, row, col):
         if self.rows[row][col] != ' ':
             print 'Invalid move. A player has already marked that spot'
+            return False
         else: 
             self.rows[row][col] = self.turn
+            return True
 
     def find_diff(self, next_board):
         diff = [(r,c)
@@ -81,3 +83,16 @@ class Board(object):
             new_board.place_char(spot[0],spot[1])
             poss_boards.append(new_board)
         return poss_boards
+    def to_string(self):
+        r = ''
+        for row in self.rows:
+            for c in row:
+                r += c
+        return r
+    def from_string(self,line):
+        for i, char in enumerate(line):
+            col = i%3
+            row = (i - col)/3
+            self.rows[row][col] = char
+
+
