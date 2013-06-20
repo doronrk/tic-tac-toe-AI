@@ -1,15 +1,4 @@
-import socket, sys, board, minimax, threading
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-HOST = '127.0.0.1'
-PORT = 1060
-
-game_list = []
-
-class Game(object):
-	def __init__(self, s, b):
-		self.sock = s
-		self.board = b
+import socket, sys, board, minimax, select
 
 
 def recv_all(sock,length):
@@ -22,11 +11,6 @@ def recv_all(sock,length):
 		data += more
 	return data
 
-s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-s.bind((HOST,PORT))
-s.listen(1)
-
-
 def end_game(board):
 	if board.check_victory():
 		return True
@@ -35,36 +19,48 @@ def end_game(board):
 	else:
 		return False
 
-def search_clients():
-	while True:
-		sc, sockname = s.accept()
-		message = recv_all(sc,9)
-		new_board = board.Board()
-		new_board.from_string(message)
-		new_game = Game(sc, new_board)
-		game_list.append(new_game)
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-t = threading.Thread(target=search_clients)
-t.daemon = True
-t.start()
+HOST = '127.0.0.1'
+PORT = 1060
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind((HOST,PORT))
+s.listen(5)
+input = [s,sys.stdin]
 
 while True:
-	for game in game_list:
-		current_board = game.board
-		current_socket = game.sock
-		if end_game(current_board):
-			current_socket.sendall(current_board.to_string())
-			current_socket.close()
-			game_list.remove(game)
+	inputready, outputready, exceptready = select.select(input,[],[])
+	for sock in inputready:
+		if sock == s:
+			sc, sockname = s.accept()
+			message = recv_all(sc,9)
+			new_board = board.Board()
+			new_board.from_string(message)
+			r,c = minimax.get_move(new_board)
+			new_board.place_char(r,c)
+			sc.sendall(new_board.to_string())
+			input.append(sc)
+		elif sock == sys.stdin:
+			junk = sys.stdin.readline()
+			break
 		else:
-			r,c = minimax.get_move(current_board)
-			current_board.place_char(r,c)
-			current_socket.sendall(current_board.to_string())
-			if end_game(current_board):
-				current_socket.close()
-				game_list.remove(game)
+			message = recv_all(sock,9)
+			if message:
+				new_board = board.Board()
+				new_board.from_string(message)
+				if end_game(new_board):
+					sock.sendall(message)
+					sock.close()
+					input.remove(sock)
+				else:
+					r,c = minimax.get_move(new_board)
+					new_board.place_char(r,c)
+					sock.sendall(new_board.to_string())
+					if end_game(new_board):
+						sock.close()
+						input.remove(sock)
 			else:
-				new = recv_all(current_socket, 9)
-				current_board.from_string(new)
+				sock.close()
+				input.remove(sock)
 
-sc.close()
+s.close()
