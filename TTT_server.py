@@ -26,6 +26,7 @@ s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 s.bind((HOST,PORT))
 s.listen(1)
 
+
 def end_game(board):
 	if board.check_victory():
 		return True
@@ -50,16 +51,20 @@ t.start()
 while True:
 	for game in game_list:
 		current_board = game.board
-		print current_board
 		current_socket = game.sock
 		if end_game(current_board):
 			current_socket.sendall(current_board.to_string())
+			current_socket.close()
+			game_list.remove(game)
 		else:
 			r,c = minimax.get_move(current_board)
 			current_board.place_char(r,c)
 			current_socket.sendall(current_board.to_string())
-			new = recv_all(current_socket, 9)
-			current_board.from_string(new)
-
+			if end_game(current_board):
+				current_socket.close()
+				game_list.remove(game)
+			else:
+				new = recv_all(current_socket, 9)
+				current_board.from_string(new)
 
 sc.close()
